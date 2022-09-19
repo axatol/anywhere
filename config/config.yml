@@ -1,0 +1,15 @@
+verbose: false
+debug: false
+
+database:
+  host: localhost
+  port: 5432
+  name: anywhere
+  user: anywhere
+  pass: anywhere
+
+server:
+  port: 8042
+  allow_origins:
+    - http://localhost:3000
+    # - https://anywhere.k8s.axatol.xyz

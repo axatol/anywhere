@@ -1,15 +1,15 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+# dependencies
+node_modules
 
-# Test binary, built with `go test -c`
-*.test
+# sst
+.sst
+.build
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+# k8s manifest
+*.k8s.yaml
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# misc
+.DS_Store
+
+# local env files
+.env*.local
