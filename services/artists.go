@@ -7,12 +7,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tunes-anywhere/anywhere/config"
 	"github.com/tunes-anywhere/anywhere/models"
 	"github.com/tunes-anywhere/anywhere/server"
 )
 
 func ListArtists(c *gin.Context) {
-	result, err := models.ListArtists()
+	result, err := models.ListArtists(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
@@ -34,29 +35,28 @@ func CreateArtist(c *gin.Context) {
 		return
 	}
 
-	if partialArtist.Name == "" {
-		err := fmt.Errorf("must provide artist name")
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
-		return
-	}
-
-	artist, err := models.CreateArtist(partialArtist.Name)
+	artist, err := models.CreateArtist(c, &partialArtist)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
+	config.Log.Debugw("created artist",
+		"partial_artist", partialArtist,
+		"artist", artist,
+	)
+
 	c.JSON(http.StatusCreated, server.OKResponse(artist))
 }
 
 func ReadArtist(c *gin.Context) {
-	id, err := getParamUint(c)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
+	id := c.Param("id")
+	if id == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide id")))
 		return
 	}
 
-	artist, err := models.ReadArtist(uint(id))
+	artist, err := models.ReadArtist(c, id)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
@@ -66,9 +66,9 @@ func ReadArtist(c *gin.Context) {
 }
 
 func UpdateArtist(c *gin.Context) {
-	id, err := getParamUint(c)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
+	id := c.Param("id")
+	if id == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide id")))
 		return
 	}
 
@@ -84,13 +84,7 @@ func UpdateArtist(c *gin.Context) {
 		return
 	}
 
-	if partialArtist.Name == "" {
-		err := fmt.Errorf("must provide artist name")
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
-		return
-	}
-
-	artist, err := models.UpdateArtist(id, &partialArtist)
+	artist, err := models.UpdateArtist(c, id, &partialArtist)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
@@ -100,13 +94,13 @@ func UpdateArtist(c *gin.Context) {
 }
 
 func DeleteArtist(c *gin.Context) {
-	id, err := getParamUint(c)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
+	id := c.Param("id")
+	if id == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide id")))
 		return
 	}
 
-	if err := models.DeleteArtist(id); err != nil {
+	if err := models.DeleteArtist(c, id); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}

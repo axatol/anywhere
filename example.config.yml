@@ -1,0 +1,19 @@
+verbose: false
+debug: false
+
+database:
+  host: mongodb://localhost:27017
+  name: anywhere
+  user: an_access_key
+  pass: a_secret_key
+
+datastore:
+  host: http://localhost:9000
+  name: anywhere
+  user: an_access_key
+  pass: a_secret_key
+
+server:
+  port: 8042
+  allow_origins:
+    - http://localhost:3000

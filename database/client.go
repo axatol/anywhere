@@ -1,34 +1,36 @@
 package database
 
 import (
-	"fmt"
-	"strings"
+	"context"
 
 	"github.com/tunes-anywhere/anywhere/config"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var DB *gorm.DB
-var logger = config.Logger.Named("database")
+var client *mongo.Client
+var Database *mongo.Database
+var logger = config.Log.Named("database")
 
-func Init() {
-	dsn := []string{
-		fmt.Sprintf("host=%s", config.Config.Database.Host),
-		fmt.Sprintf("user=%s", config.Config.Database.User),
-		fmt.Sprintf("password=%s", config.Config.Database.Pass),
-		fmt.Sprintf("port=%d", config.Config.Database.Port),
-		fmt.Sprintf("dbname=%s", config.Config.Database.Name),
+func Init(ctx context.Context) {
+	opts := options.Client()
+	opts.ApplyURI(config.Config.Database.Host)
+	opts.Auth = &options.Credential{
+		Username: config.Config.Database.User,
+		Password: config.Config.Database.Pass,
 	}
 
-	config := postgres.Config{
-		DSN: strings.Join(dsn, " "),
-	}
-
-	conn, err := gorm.Open(postgres.New(config))
+	newClient, err := mongo.Connect(ctx, opts)
 	if err != nil {
 		logger.Fatalln(err)
 	}
 
-	DB = conn
+	client = newClient
+	Database = client.Database(config.Config.Database.Name)
+}
+
+func Close(ctx context.Context) {
+	if err := client.Disconnect(ctx); err != nil {
+		logger.Errorln(err)
+	}
 }

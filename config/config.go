@@ -3,67 +3,118 @@ package config
 import (
 	_ "embed"
 	"flag"
-	"strings"
+	"os"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed config.yml
-var rawConfig []byte
-
 type config struct {
-	Verbose bool `yaml:"verbose" json:"verbose"`
-	Debug   bool `yaml:"debug" json:"debug"`
+	Verbose bool `yaml:"verbose"`
+	Debug   bool `yaml:"debug"`
 
 	Database struct {
-		Host string `yaml:"host" json:"host"`
-		Port int    `yaml:"port" json:"port"`
-		Name string `yaml:"name" json:"name"`
-		User string `yaml:"user" json:"user"`
-		Pass string `yaml:"pass" json:"pass"`
-	} `yaml:"database" json:"database"`
+		Host string `yaml:"host"`
+		Name string `yaml:"name"`
+		User string `yaml:"user"`
+		Pass string `yaml:"pass"`
+	} `yaml:"database"`
+
+	Datastore struct {
+		Host string `yaml:"host"`
+		Name string `yaml:"name"`
+		User string `yaml:"user"`
+		Pass string `yaml:"pass"`
+	} `yaml:"datastore"`
 
 	Server struct {
-		Port         int      `yaml:"port" json:"port"`
-		AllowOrigins []string `yaml:"allow_origins" json:"allow_origins"`
-	} `yaml:"server" json:"server"`
+		Port         string   `yaml:"port"`
+		AllowOrigins []string `yaml:"allow_origins"`
+	} `yaml:"server"`
 }
 
-var Config config
-var Logger *zap.SugaredLogger
-
-type flagList []string
-
-func (l *flagList) String() string {
-	return strings.Join(*l, ", ")
-}
-
-func (l *flagList) Set(value string) error {
-	*l = append(*l, value)
-	return nil
-}
+var (
+	Config config
+)
 
 func init() {
 	initConfig()
 	initLogger()
 }
 
-func initConfig() {
-	var defaultConfig config
-	if err := yaml.Unmarshal(rawConfig, &defaultConfig); err != nil {
-		panic("failed to parse config file")
+func resolveRawConfig() []byte {
+	var locationsToTry []string
+	if loc, ok := os.LookupEnv("ANYWHERE_CONFIG_FILE"); ok {
+		locationsToTry = []string{loc}
+	} else {
+		locationsToTry = []string{
+			"./config.yml",
+			"./example.config.yml",
+		}
 	}
 
-	verbose := flag.Bool("verbose", defaultConfig.Verbose, "enable verbose logging")
-	debug := flag.Bool("debug", defaultConfig.Debug, "enable debugging mode")
-	dbHost := flag.String("dbhost", defaultConfig.Database.Host, "database host")
-	dbPort := flag.Int("dbport", defaultConfig.Database.Port, "database port")
-	dbName := flag.String("dbname", defaultConfig.Database.Name, "database name")
-	dbUser := flag.String("dbuser", defaultConfig.Database.User, "database user")
-	dbPass := flag.String("dbpass", defaultConfig.Database.Pass, "database pass")
-	srvPort := flag.Int("srvport", defaultConfig.Server.Port, "server listen port")
+	for _, loc := range locationsToTry {
+		if _, err := os.Stat(loc); err != nil {
+			continue
+		}
+
+		rawConfig, err := os.ReadFile(loc)
+		if err != nil {
+			panic(err)
+		}
+
+		return rawConfig
+	}
+
+	return nil
+}
+
+func initConfig() {
+	if rawConfig := resolveRawConfig(); rawConfig != nil {
+		if err := yaml.Unmarshal(rawConfig, &Config); err != nil {
+			panic("failed to parse config file")
+		}
+	}
+
+	// applying config from defaults
+	Config.Verbose = assertBool("Verbose", &Config.Verbose, false)
+	Config.Debug = assertBool("Debug", &Config.Debug, false)
+	Config.Database.Host = assertStr("Database.Host", &Config.Database.Host, "mongodb://localhost:27017")
+	Config.Database.Name = assertStr("Database.Name", &Config.Database.Name, "anywhere")
+	// Config.Database.User
+	// Config.Database.Pass
+	Config.Datastore.Host = assertStr("Datastore.Host", &Config.Datastore.Host, "http://localhost:9000")
+	Config.Datastore.Name = assertStr("Datastore.Name", &Config.Datastore.Name, "anywhere")
+	// Config.Datastore.User
+	// Config.Datastore.Pass
+	Config.Server.Port = assertStr("Server.Port", &Config.Server.Port, "8042")
+	Config.Server.AllowOrigins = assertStrs("Server.Port", Config.Server.AllowOrigins, []string{"http://localhost:3000"})
+
+	// applying config from environment variables
+	Config.Verbose = assertBool("Verbose", envBool("VERBOSE"), Config.Verbose)
+	Config.Debug = assertBool("Debug", envBool("DEBUG"), Config.Debug)
+	Config.Database.Host = assertStr("Database.Host", envStr("DATABASE_HOST"), Config.Database.Host)
+	Config.Database.Name = assertStr("Database.Name", envStr("DATABASE_NAME"), Config.Database.Name)
+	Config.Database.User = assertStr("Database.User", envStr("DATABASE_USER"), Config.Database.User)
+	Config.Database.Pass = assertStr("Database.Pass", envStr("DATABASE_PASS"), Config.Database.Pass)
+	Config.Datastore.Host = assertStr("Datastore.Host", envStr("DATASTORE_HOST"), Config.Datastore.Host)
+	Config.Datastore.Name = assertStr("Datastore.Name", envStr("DATASTORE_NAME"), Config.Datastore.Name)
+	Config.Datastore.User = assertStr("Datastore.User", envStr("DATASTORE_USER"), Config.Datastore.User)
+	Config.Datastore.Pass = assertStr("Datastore.Pass", envStr("DATASTORE_PASS"), Config.Datastore.Pass)
+	Config.Server.Port = assertStr("Server.Port", envStr("SERVER_PORT"), Config.Server.Port)
+	Config.Server.AllowOrigins = assertStrs("Server.AllowOrigins", envStrs("SERVER_ALLOW_ORIGINS"), Config.Server.AllowOrigins)
+
+	// applying config from flags
+	verbose := flag.Bool("verbose", Config.Verbose, "enable verbose logging")
+	debug := flag.Bool("debug", Config.Debug, "enable debugging mode")
+	dbHost := flag.String("dbhost", Config.Database.Host, "database host")
+	dbName := flag.String("dbname", Config.Database.Name, "database name")
+	dbUser := flag.String("dbuser", Config.Database.User, "database user")
+	dbPass := flag.String("dbpass", Config.Database.Pass, "database pass")
+	dsHost := flag.String("dshost", Config.Datastore.Host, "database host")
+	dsName := flag.String("dsname", Config.Datastore.Name, "database name")
+	dsUser := flag.String("dsuser", Config.Datastore.User, "database user")
+	dsPass := flag.String("dspass", Config.Datastore.Pass, "database pass")
+	srvPort := flag.String("srvport", Config.Server.Port, "server listen port")
 	var srvOrigins flagList
 	flag.Var(&srvOrigins, "alloworigin", "allowed origins")
 	flag.Parse()
@@ -71,59 +122,13 @@ func initConfig() {
 	Config.Verbose = *verbose
 	Config.Debug = *debug
 	Config.Database.Host = *dbHost
-	Config.Database.Port = *dbPort
 	Config.Database.Name = *dbName
 	Config.Database.User = *dbUser
 	Config.Database.Pass = *dbPass
+	Config.Datastore.Host = *dsHost
+	Config.Datastore.Name = *dsName
+	Config.Datastore.User = *dsUser
+	Config.Datastore.Pass = *dsPass
 	Config.Server.Port = *srvPort
-	if len(srvOrigins) > 1 {
-		Config.Server.AllowOrigins = srvOrigins
-	} else {
-		Config.Server.AllowOrigins = defaultConfig.Server.AllowOrigins
-	}
-}
-
-func initLogger() {
-	config := zap.Config{
-		Level:       zap.NewAtomicLevelAt(zap.InfoLevel),
-		Development: true,
-		Sampling: &zap.SamplingConfig{
-			Initial:    100,
-			Thereafter: 100,
-		},
-		Encoding: "json",
-		EncoderConfig: zapcore.EncoderConfig{
-			TimeKey:        "time",
-			LevelKey:       "level",
-			NameKey:        "name",
-			CallerKey:      "caller",
-			FunctionKey:    zapcore.OmitKey,
-			MessageKey:     "msg",
-			StacktraceKey:  "stacktrace",
-			LineEnding:     zapcore.DefaultLineEnding,
-			EncodeLevel:    zapcore.CapitalLevelEncoder,
-			EncodeTime:     zapcore.ISO8601TimeEncoder,
-			EncodeDuration: zapcore.StringDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
-		},
-		OutputPaths:      []string{"stderr"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
-
-	if Config.Debug {
-		config.Development = true
-		config.Sampling = nil
-		config.Encoding = "console"
-	}
-
-	if Config.Verbose {
-		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	}
-
-	logger, err := config.Build()
-	if err != nil {
-		panic(err)
-	}
-
-	Logger = logger.Sugar()
+	Config.Server.AllowOrigins = assertStrs("Server.AllowOrigins", srvOrigins, Config.Server.AllowOrigins)
 }

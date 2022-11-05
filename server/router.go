@@ -12,8 +12,10 @@ import (
 	"github.com/tunes-anywhere/anywhere/config"
 )
 
-var logger = config.Logger.Named("server")
-var R *gin.Engine
+var (
+	logger = config.Log.Named("server")
+	R      *gin.Engine
+)
 
 func Init() {
 	if config.Config.Debug {
@@ -40,12 +42,12 @@ func Init() {
 	R.Use(gzip.Gzip(gzip.DefaultCompression))
 }
 
-func Start(port int) {
+func Start(port string) {
 	logger.Debugw("starting server",
 		"port", config.Config.Server.Port,
 	)
 
-	srv := http.Server{Addr: fmt.Sprintf(":%d", port), Handler: R}
+	srv := http.Server{Addr: fmt.Sprintf(":%s", port), Handler: R}
 	if err := srv.ListenAndServe(); err != nil {
 		logger.Fatalln(err)
 	}
