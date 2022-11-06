@@ -24,3 +24,5 @@ jobs:
         with:
           image: public.ecr.aws/axatol/anywhere
           build-args: -f ./Dockerfile.slim
+          tag-previous: false
+          use-cache: false

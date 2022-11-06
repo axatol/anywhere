@@ -15,8 +15,7 @@ jobs:
         with:
           go-version: ^1.18
 
-      - name: Build
-        run: make
+      - run: make
 
       - uses: actions/upload-artifact@v3
         with:
