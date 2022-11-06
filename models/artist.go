@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/tunes-anywhere/anywhere/config"
+	"github.com/tunes-anywhere/anywhere/contrib/mongoutil"
 	"github.com/tunes-anywhere/anywhere/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+var artistLogger = config.Log.Named("artist")
 
 func artistCol() *mongo.Collection {
 	return database.Database.Collection("artists")
@@ -46,6 +50,8 @@ func ListArtists(ctx context.Context) ([]Artist, error) {
 		return nil, err
 	}
 
+	artistLogger.Debugw("listed artists", "count", len(artists))
+
 	return artists, nil
 }
 
@@ -65,42 +71,66 @@ func CreateArtist(ctx context.Context, pt *PartialArtist) (*Artist, error) {
 		return nil, err
 	}
 
+	artistLogger.Debugw("created artist", "id", artist.ID.Hex())
+
 	return &artist, nil
 }
 
 func ReadArtist(ctx context.Context, id string) (*Artist, error) {
-	var artist Artist
-	if err := artistCol().FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&artist); err != nil {
+	oid, err := mongoutil.BsonID(id)
+	if err != nil {
 		return nil, err
 	}
+
+	var artist Artist
+	if err := artistCol().FindOne(ctx, oid).Decode(&artist); err != nil {
+		return nil, err
+	}
+
+	artistLogger.Debugw("read artist", "id", id)
 
 	return &artist, nil
 }
 
 func UpdateArtist(ctx context.Context, id string, pt *PartialArtist) (*Artist, error) {
-	filter := bson.D{{Key: "_id", Value: id}}
-
-	update := bson.D{
-		{Key: "name", Value: pt.Name},
-		{Key: "updated_at", Value: time.Now().Unix()},
+	oid, err := mongoutil.BsonID(id)
+	if err != nil {
+		return nil, err
 	}
+
+	update := bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "name", Value: pt.Name},
+			{Key: "updated_at", Value: time.Now().Unix()},
+		},
+	}}
 
 	opts := options.FindOneAndUpdate().
 		SetReturnDocument(options.After).
 		SetUpsert(false)
 
 	var artist Artist
-	if err := artistCol().FindOneAndUpdate(ctx, filter, update, opts).Decode(&artist); err != nil {
+	if err := artistCol().FindOneAndUpdate(ctx, oid, update, opts).Decode(&artist); err != nil {
 		return nil, err
 	}
+
+	artistLogger.Debugw("updated artist", "id", id)
 
 	return &artist, nil
 }
 
 func DeleteArtist(ctx context.Context, id string) error {
-	if _, err := artistCol().DeleteOne(ctx, bson.D{{Key: "_id", Value: id}}); err != nil {
+	oid, err := mongoutil.BsonID(id)
+	if err != nil {
 		return err
 	}
+
+	if _, err = artistCol().DeleteOne(ctx, oid); err != nil {
+		return err
+	}
+
+	artistLogger.Debugw("deleted artist", "id", id)
 
 	return nil
 }

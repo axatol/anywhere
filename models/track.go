@@ -6,12 +6,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tunes-anywhere/anywhere/config"
+	"github.com/tunes-anywhere/anywhere/contrib/mongoutil"
 	"github.com/tunes-anywhere/anywhere/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+var trackLogger = config.Log.Named("track")
 
 func trackCol() *mongo.Collection {
 	return database.Database.Collection("tracks")
@@ -103,6 +107,8 @@ func ListTracks(ctx context.Context) ([]Track, error) {
 		return nil, err
 	}
 
+	trackLogger.Debugw("listed tracks", "count", len(tracks))
+
 	return tracks, nil
 }
 
@@ -128,46 +134,70 @@ func CreateTrack(ctx context.Context, pct *PartialCreateTrack) (*Track, error) {
 		return nil, err
 	}
 
+	trackLogger.Debugw("created track", "id", track.ID.Hex())
+
 	return &track, nil
 }
 
 func ReadTrack(ctx context.Context, id string) (*Track, error) {
-	filter := bson.D{{Key: "_id", Value: id}}
+	oid, err := mongoutil.BsonID(id)
+	if err != nil {
+		return nil, err
+	}
 
-	update := bson.D{{Key: "accessed_at", Value: time.Now().Unix()}}
+	update := bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "accessed_at", Value: time.Now().Unix()},
+		},
+	}}
 
 	opts := options.FindOneAndUpdate().
 		SetReturnDocument(options.After).
 		SetUpsert(false)
 
 	var track Track
-	if err := trackCol().FindOneAndUpdate(ctx, filter, update, opts).Decode(&track); err != nil {
+	if err := trackCol().FindOneAndUpdate(ctx, oid, update, opts).Decode(&track); err != nil {
 		return nil, err
 	}
+
+	trackLogger.Debugw("read track", "id", id)
 
 	return &track, nil
 }
 
 func UpdateTrack(ctx context.Context, id string, t *Track) (*Track, error) {
-	filter := bson.D{{Key: "_id", Value: id}}
-
-	update := bson.D{
-		{Key: "source_url", Value: t.SourceURL},
-		{Key: "data_key", Value: t.DataKey},
-		{Key: "duration", Value: t.Duration},
-		{Key: "artist_ids", Value: t.ArtistIDs},
-		{Key: "track_status", Value: t.TrackStatus},
-		{Key: "updated_at", Value: time.Now().Unix()},
+	if err := t.Valid(); err != nil {
+		return nil, err
 	}
+
+	oid, err := mongoutil.BsonID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	update := bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "source_url", Value: t.SourceURL},
+			{Key: "data_key", Value: t.DataKey},
+			{Key: "duration", Value: t.Duration},
+			{Key: "artist_ids", Value: t.ArtistIDs},
+			{Key: "track_status", Value: t.TrackStatus},
+			{Key: "updated_at", Value: time.Now().Unix()},
+		},
+	}}
 
 	opts := options.FindOneAndUpdate().
 		SetReturnDocument(options.After).
 		SetUpsert(false)
 
 	var track Track
-	if err := trackCol().FindOneAndUpdate(ctx, filter, update, opts).Decode(&track); err != nil {
+	if err := trackCol().FindOneAndUpdate(ctx, oid, update, opts).Decode(&track); err != nil {
 		return nil, err
 	}
+
+	trackLogger.Debugw("updated track", "id", id)
 
 	return &track, nil
 }
@@ -176,6 +206,8 @@ func DeleteTrack(ctx context.Context, id string) error {
 	if _, err := trackCol().DeleteOne(ctx, bson.D{{Key: "_id", Value: id}}); err != nil {
 		return err
 	}
+
+	trackLogger.Debugw("deleted track", "id", id)
 
 	return nil
 }
