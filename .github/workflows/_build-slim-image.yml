@@ -20,7 +20,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
 
-      - uses: axatol/axations/docker-build-push@release
+      - uses: axatol/actions/docker-build-push@release
         with:
           image: public.ecr.aws/axatol/tunes-anywhere
           build-args: -f ./Dockerfile.slim
