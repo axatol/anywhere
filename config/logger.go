@@ -36,13 +36,14 @@ func initLogger() {
 		ErrorOutputPaths: []string{"stderr"},
 	}
 
-	if Config.Debug {
+	if Values.Debug {
 		config.Development = true
 		config.Sampling = nil
 		config.Encoding = "console"
+		config.EncoderConfig.TimeKey = ""
 	}
 
-	if Config.Verbose {
+	if Values.Verbose {
 		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
 

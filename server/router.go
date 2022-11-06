@@ -18,7 +18,7 @@ var (
 )
 
 func Init() {
-	if config.Config.Debug {
+	if config.Values.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
@@ -35,7 +35,7 @@ func Init() {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = false
-	corsConfig.AllowOrigins = config.Config.Server.AllowOrigins
+	corsConfig.AllowOrigins = config.Values.Server.AllowOrigins
 	R.Use(cors.New(corsConfig))
 	R.Use(ginzap.Ginzap(logger.Desugar(), time.RFC3339, false))
 	R.Use(ginzap.RecoveryWithZap(logger.Desugar(), true))
@@ -44,7 +44,7 @@ func Init() {
 
 func Start(port string) {
 	logger.Debugw("starting server",
-		"port", config.Config.Server.Port,
+		"port", config.Values.Server.Port,
 	)
 
 	srv := http.Server{Addr: fmt.Sprintf(":%s", port), Handler: R}

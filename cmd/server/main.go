@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/jsii-runtime-go"
 	"github.com/tunes-anywhere/anywhere/config"
 	"github.com/tunes-anywhere/anywhere/database"
 	"github.com/tunes-anywhere/anywhere/datastore"
@@ -43,14 +41,5 @@ func main() {
 	server.R.PUT("/api/tracks/:id", services.UpdateTrack)
 	server.R.DELETE("/api/tracks/:id", services.DeleteTrack)
 
-	// server.Start(config.Config.Server.Port)
-
-	res, err := datastore.Client.ListObjects(ctx, &s3.ListObjectsInput{Bucket: jsii.String("anywhere")})
-	config.Log.Debugw("listobjects", "err", err, "res", res)
-
-	tracks, err := models.ListTracks(ctx)
-	config.Log.Debugw("listtracks", "err", err, "res", tracks)
-
-	artists, err := models.ListArtists(ctx)
-	config.Log.Debugw("listartists", "err", err, "res", artists)
+	server.Start(config.Values.Server.Port)
 }

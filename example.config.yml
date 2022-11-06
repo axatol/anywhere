@@ -4,14 +4,14 @@ debug: false
 database:
   host: mongodb://localhost:27017
   name: anywhere
-  user: an_access_key
-  pass: a_secret_key
+  user: admin
+  pass: password
 
 datastore:
-  host: http://localhost:9000
+  host: http://localhost:9001
   name: anywhere
-  user: an_access_key
-  pass: a_secret_key
+  user: admin
+  pass: password
 
 server:
   port: 8042

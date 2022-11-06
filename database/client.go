@@ -14,10 +14,10 @@ var logger = config.Log.Named("database")
 
 func Init(ctx context.Context) {
 	opts := options.Client()
-	opts.ApplyURI(config.Config.Database.Host)
+	opts.ApplyURI(config.Values.Database.Host)
 	opts.Auth = &options.Credential{
-		Username: config.Config.Database.User,
-		Password: config.Config.Database.Pass,
+		Username: config.Values.Database.User,
+		Password: config.Values.Database.Pass,
 	}
 
 	newClient, err := mongo.Connect(ctx, opts)
@@ -26,7 +26,7 @@ func Init(ctx context.Context) {
 	}
 
 	client = newClient
-	Database = client.Database(config.Config.Database.Name)
+	Database = client.Database(config.Values.Database.Name)
 }
 
 func Close(ctx context.Context) {

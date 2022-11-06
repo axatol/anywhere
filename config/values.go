@@ -1,74 +1,56 @@
 package config
 
 import (
-	"fmt"
+	_ "embed"
 	"os"
-	"strings"
 
-	"github.com/aws/jsii-runtime-go"
+	"gopkg.in/yaml.v3"
 )
 
-func prefixEnv(key string) string {
-	return fmt.Sprintf("ANYWHERE_%s", key)
-}
+var (
+	Values config
+)
 
-func envStrs(key string) []string {
-	if value, ok := os.LookupEnv(prefixEnv(key)); ok {
-		return strings.Split(value, ",")
+func resolveRawConfig() []byte {
+	var locationsToTry []string
+	if loc, ok := os.LookupEnv("ANYWHERE_CONFIG_FILE"); ok {
+		locationsToTry = []string{loc}
+	} else {
+		locationsToTry = []string{
+			"./config.yml",
+			"./example.config.yml",
+		}
+	}
+
+	for _, loc := range locationsToTry {
+		if _, err := os.Stat(loc); err != nil {
+			continue
+		}
+
+		rawConfig, err := os.ReadFile(loc)
+		if err != nil {
+			panic(err)
+		}
+
+		return rawConfig
 	}
 
 	return nil
 }
 
-func envStr(key string) *string {
-	if value, ok := os.LookupEnv(prefixEnv(key)); ok {
-		return &value
+func initConfig() {
+	if rawConfig := resolveRawConfig(); rawConfig != nil {
+		if err := yaml.Unmarshal(rawConfig, &Values); err != nil {
+			panic("failed to parse config file")
+		}
 	}
 
-	return nil
-}
+	// applying defaults to missing values
+	Values.ApplyDefaults()
 
-func envBool(key string) *bool {
-	if value, ok := os.LookupEnv(prefixEnv(key)); ok {
-		return jsii.Bool(value == "true")
-	}
+	// overriding with environment variables
+	Values.ApplyFromEnvironment()
 
-	return nil
-}
-
-func assertStrs(name string, value []string, defaultValue ...[]string) []string {
-	if value != nil && len(value) > 0 {
-		return value
-	}
-
-	if len(defaultValue) == 1 && len(defaultValue[0]) > 0 {
-		return defaultValue[0]
-	}
-
-	panic(fmt.Errorf("%s: could not resolve value", name))
-}
-
-func assertStr(name string, value *string, defaultValue ...string) string {
-	if value != nil && *value != "" {
-		return *value
-	}
-
-	if len(defaultValue) == 1 && len(defaultValue[0]) > 0 {
-		return defaultValue[0]
-	}
-
-	panic(fmt.Errorf("%s: could not resolve value", name))
-}
-
-func assertBool(name string, value *bool, defaultValue ...bool) bool {
-	if value != nil {
-		return *value
-
-	}
-
-	if len(defaultValue) == 1 {
-		return defaultValue[0]
-	}
-
-	panic(fmt.Errorf("%s: could not resolve value", name))
+	// overriding with flags
+	Values.ApplyFromFlags()
 }
