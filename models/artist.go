@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tunes-anywhere/anywhere/config"
-	"github.com/tunes-anywhere/anywhere/contrib/mongoutil"
-	"github.com/tunes-anywhere/anywhere/database"
+	"github.com/axatol/anywhere/config"
+	"github.com/axatol/anywhere/contrib/mongoutil"
+	"github.com/axatol/anywhere/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

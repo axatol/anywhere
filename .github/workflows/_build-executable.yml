@@ -20,5 +20,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: tunes-anywhere
+          name: anywhere
           path: ./bin

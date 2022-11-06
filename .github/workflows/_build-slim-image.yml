@@ -1,4 +1,4 @@
-name: Build Image
+name: Build Slim Image
 
 on:
   workflow_call:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: tunes-anywhere
+          name: anywhere
           path: ./bin
 
       - uses: aws-actions/configure-aws-credentials@v1
@@ -22,5 +22,5 @@ jobs:
 
       - uses: axatol/actions/docker-build-push@release
         with:
-          image: public.ecr.aws/axatol/tunes-anywhere
+          image: public.ecr.aws/axatol/anywhere
           build-args: -f ./Dockerfile.slim

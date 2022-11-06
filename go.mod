@@ -1,4 +1,4 @@
-module github.com/tunes-anywhere/anywhere
+module github.com/axatol/anywhere
 
 go 1.18
 

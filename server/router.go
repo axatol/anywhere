@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/axatol/anywhere/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
-	"github.com/tunes-anywhere/anywhere/config"
 )
 
 var (

@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/axatol/anywhere/config"
+	"github.com/axatol/anywhere/models"
+	"github.com/axatol/anywhere/server"
 	"github.com/gin-gonic/gin"
-	"github.com/tunes-anywhere/anywhere/config"
-	"github.com/tunes-anywhere/anywhere/models"
-	"github.com/tunes-anywhere/anywhere/server"
 )
 
 func ListArtists(c *gin.Context) {

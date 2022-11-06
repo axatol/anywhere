@@ -3,7 +3,7 @@ package datastore
 import (
 	"context"
 
-	"github.com/tunes-anywhere/anywhere/config"
+	"github.com/axatol/anywhere/config"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"

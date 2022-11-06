@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 
-	"github.com/tunes-anywhere/anywhere/config"
+	"github.com/axatol/anywhere/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

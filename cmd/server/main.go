@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 
-	"github.com/tunes-anywhere/anywhere/config"
-	"github.com/tunes-anywhere/anywhere/database"
-	"github.com/tunes-anywhere/anywhere/datastore"
-	"github.com/tunes-anywhere/anywhere/models"
-	"github.com/tunes-anywhere/anywhere/server"
-	"github.com/tunes-anywhere/anywhere/services"
+	"github.com/axatol/anywhere/config"
+	"github.com/axatol/anywhere/database"
+	"github.com/axatol/anywhere/datastore"
+	"github.com/axatol/anywhere/models"
+	"github.com/axatol/anywhere/server"
+	"github.com/axatol/anywhere/services"
 )
 
 func main() {
