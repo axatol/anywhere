@@ -10,3 +10,4 @@ jobs:
   build-slim-image:
     needs: build-executable
     uses: ./.github/workflows/_build-slim-image.yml
+    secrets: inherit
