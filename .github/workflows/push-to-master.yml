@@ -4,5 +4,9 @@ on:
       - master
 
 jobs:
-  build:
+  build-executable:
     uses: ./.github/workflows/_build-executable.yml
+
+  build-slim-image:
+    needs: build-executable
+    uses: ./.github/workflows/_build-slim-image.yml
