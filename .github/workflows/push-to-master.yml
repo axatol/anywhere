@@ -1,0 +1,8 @@
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-executable.yml
