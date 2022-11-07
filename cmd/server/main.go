@@ -14,17 +14,17 @@ import (
 func main() {
 	ctx := context.Background()
 
-	config.Log.Debug("initialising datastore client")
+	config.Log.Info("initialising datastore client")
 	datastore.Init(ctx)
 
-	config.Log.Debug("initialising database client")
+	config.Log.Info("initialising database client")
 	database.Init(ctx)
 	defer database.Close(ctx)
 
-	config.Log.Debug("initialising database models")
+	config.Log.Info("initialising database models")
 	models.Init(ctx)
 
-	config.Log.Debug("configuring server")
+	config.Log.Info("configuring server")
 	server.Init()
 
 	server.R.GET("/api/health", services.Health)
@@ -41,5 +41,6 @@ func main() {
 	server.R.PUT("/api/tracks/:id", services.UpdateTrack)
 	server.R.DELETE("/api/tracks/:id", services.DeleteTrack)
 
+	config.Log.Infow("starting server", "port", config.Values.Server.Port)
 	server.Start(config.Values.Server.Port)
 }

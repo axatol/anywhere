@@ -36,4 +36,8 @@ func Init(ctx context.Context) {
 	}
 
 	Client = s3.NewFromConfig(cfg)
+
+	if _, err := Client.ListBuckets(ctx, &s3.ListBucketsInput{}); err != nil {
+		panic(err)
+	}
 }

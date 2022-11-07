@@ -1,9 +1,0 @@
-FROM --platform=linux/amd64 alpine
-
-RUN adduser --disabled-password --gecos "" --uid 1000 default
-USER default
-
-WORKDIR /go/app
-COPY --chown=default ./bin ./bin
-
-ENTRYPOINT [ "./bin/server" ]

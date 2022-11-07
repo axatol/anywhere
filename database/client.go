@@ -27,6 +27,10 @@ func Init(ctx context.Context) {
 
 	client = newClient
 	Database = client.Database(config.Values.Database.Name)
+
+	if err := client.Ping(ctx, nil); err != nil {
+		panic(err)
+	}
 }
 
 func Close(ctx context.Context) {

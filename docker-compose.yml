@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  database:
+    image: mongo
+    container_name: anywhere-database
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - 27017:27017
+    volumes:
+      - database-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      retries: 5
+      interval: 15s
+      start_period: 30s
+
+  database-ui:
+    image: mongo-express
+    container_name: anywhere-database-ui
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password@database:27017/
+    ports:
+      - 8081:8081
+    depends_on:
+      database:
+        condition: service_healthy
+
+  datastore:
+    image: quay.io/minio/minio
+    container_name: anywhere-datastore
+    command: [ "server", "/data", "--console-address", ":9001" ]
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    ports:
+      - 9001:9000
+      - 9002:9001
+    volumes:
+      - datastore-data:/data
+  # cache:
+  #   image: redis:6
+  #   container_name: anywhere-cache
+  #   ports:
+  #     - 6379:6379
+  #   volumes:
+  #     - cache:/data
+
+  # api:
+  #   build: ./
+  #   container_name: anywhere-api
+  #   ports:
+  #     - 8042:8042
+
+volumes:
+  database-data:
+  datastore-data:

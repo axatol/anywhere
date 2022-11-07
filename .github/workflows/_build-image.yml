@@ -11,11 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: anywhere
-          path: ./bin
-
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-1
@@ -29,6 +24,3 @@ jobs:
       - uses: axatol/actions/docker-build-push@release
         with:
           image: public.ecr.aws/axatol/anywhere
-          build-args: -f ./Dockerfile.slim
-          tag-previous: false
-          use-cache: false
