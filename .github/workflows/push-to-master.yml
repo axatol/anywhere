@@ -7,6 +7,6 @@ jobs:
   build-executable:
     uses: ./.github/workflows/_build-executable.yml
 
-  build-slim-image:
-    uses: ./.github/workflows/_build-slim-image.yml
+  build-image:
+    uses: ./.github/workflows/_build-image.yml
     secrets: inherit
