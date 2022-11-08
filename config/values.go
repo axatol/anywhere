@@ -13,12 +13,13 @@ var (
 
 func resolveRawConfig() []byte {
 	var locationsToTry []string
-	if loc, ok := os.LookupEnv("ANYWHERE_CONFIG_FILE"); ok {
-		locationsToTry = []string{loc}
+
+	if loc := envStr("CONFIG_FILEPATH"); loc != nil {
+		locationsToTry = []string{*loc}
 	} else {
 		locationsToTry = []string{
+			"./config.local.yml",
 			"./config.yml",
-			"./example.config.yml",
 		}
 	}
 
