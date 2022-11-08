@@ -40,8 +40,6 @@ type PartialUpdateTrack struct {
 }
 
 type Track struct {
-	*PartialCreateTrack
-	*PartialUpdateTrack
 	ID          primitive.ObjectID    `json:"id"                     bson:"_id"          validate:"required"`
 	SourceURL   string                `json:"source_url"             bson:"source_url"   validate:"required,url"`
 	Title       string                `json:"title"                  bson:"title"        validate:"required,min=3"`
