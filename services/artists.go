@@ -1,15 +1,14 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/axatol/anywhere/config"
 	"github.com/axatol/anywhere/models"
 	"github.com/axatol/anywhere/server"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 func ListArtists(c *gin.Context) {
@@ -23,26 +22,20 @@ func ListArtists(c *gin.Context) {
 }
 
 func CreateArtist(c *gin.Context) {
-	raw, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
+	var input models.PartialArtist
+	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	var partialArtist models.PartialArtist
-	if err := json.Unmarshal(raw, &partialArtist); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
-		return
-	}
-
-	artist, err := models.CreateArtist(c, &partialArtist)
+	artist, err := models.CreateArtist(c, &input)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
 	config.Log.Debugw("created artist",
-		"partial_artist", partialArtist,
+		"partial_artist", input,
 		"artist", artist,
 	)
 
@@ -67,24 +60,14 @@ func ReadArtist(c *gin.Context) {
 
 func UpdateArtist(c *gin.Context) {
 	id := c.Param("id")
-	if id == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide id")))
-		return
-	}
 
-	raw, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
+	var input models.PartialArtist
+	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	var partialArtist models.PartialArtist
-	if err := json.Unmarshal(raw, &partialArtist); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
-		return
-	}
-
-	artist, err := models.UpdateArtist(c, id, &partialArtist)
+	artist, err := models.UpdateArtist(c, id, &input)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return

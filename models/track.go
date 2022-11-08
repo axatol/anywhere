@@ -2,12 +2,12 @@ package models
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
+	"github.com/aws/jsii-runtime-go"
 	"github.com/axatol/anywhere/config"
 	"github.com/axatol/anywhere/contrib/mongoutil"
+	"github.com/axatol/anywhere/contrib/validator"
 	"github.com/axatol/anywhere/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,79 +21,37 @@ func trackCol() *mongo.Collection {
 	return database.Database.Collection("tracks")
 }
 
-type TrackStatus string
-
 const (
-	TrackStatusUnknown TrackStatus = "UNKNOWN"
-	TrackStatusPending TrackStatus = "PENDING"
-	TrackStatusInvalid TrackStatus = "INVALID"
+	TrackStatusUnknown = "UNKNOWN"
+	TrackStatusPending = "PENDING"
+	TrackStatusInvalid = "INVALID"
 )
 
-func (ts TrackStatus) Valid() error {
-	if ts != TrackStatusUnknown &&
-		ts != TrackStatusPending &&
-		ts != TrackStatusInvalid {
-		return fmt.Errorf("TrackStatus: invalid track status, must be one of: [%s]", strings.Join([]string{
-			string(TrackStatusUnknown),
-			string(TrackStatusPending),
-			string(TrackStatusInvalid),
-		}, ", "))
-	}
-
-	return nil
-}
-
 type PartialCreateTrack struct {
-	Title     string `json:"title"`
-	SourceURL string `json:"source_url"`
+	SourceURL string `json:"source_url"   bson:"source_url" validate:"required,url"`
+	Title     string `json:"title"        bson:"title"      validate:"required,min=3"`
 }
 
-func (pct *PartialCreateTrack) Valid() error {
-	if pct.Title == "" {
-		return fmt.Errorf("PartialCreateTrack: must specify title")
-	}
-
-	if pct.SourceURL == "" {
-		return fmt.Errorf("PartialCreateTrack: must specify source url")
-	}
-
-	return nil
+type PartialUpdateTrack struct {
+	Duration    *int64                `json:"duration,omitempty"     bson:"duration"     validate:"omitempty,min=1"`
+	DataKey     *string               `json:"data_key,omitempty"     bson:"data_key"     validate:"omitempty,min=1"`
+	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids"   validate:"omitempty,min=1"`
+	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status" validate:"omitempty,oneof=UNKNOWN PENDING INVALID"`
 }
 
 type Track struct {
-	ID          primitive.ObjectID    `json:"id"          bson:"_id"`
-	Title       string                `json:"title"       bson:"title"`
-	SourceURL   string                `json:"source_url"  bson:"source_url"`
-	Duration    *int64                `json:"duration"    bson:"duration"`
-	DataKey     *string               `json:"data_key"    bson:"data_key"`
-	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids"  bson:"artists"`
-	TrackStatus TrackStatus           `json:"status"      bson:"status"`
-	AccessedAt  int64                 `json:"accessed_at" bson:"accessed_at"`
-	CreatedAt   int64                 `json:"created_at"  bson:"created_at"`
-	UpdatedAt   int64                 `json:"updated_at"  bson:"updated_at"`
-}
-
-func (t *Track) Valid() error {
-	if t.Title == "" {
-		return fmt.Errorf("Track: Title: must specify a valid title")
-	}
-	if t.SourceURL == "" {
-		return fmt.Errorf("Track: SourceURL: must specify a valid source url")
-	}
-
-	if t.Duration != nil && *t.Duration < 1 {
-		return fmt.Errorf("Track: Duration: must specify a positive duration")
-	}
-
-	if t.DataKey != nil && len(*t.DataKey) < 1 {
-		return fmt.Errorf("Track: DataKey: must specify a valid datakey")
-	}
-
-	if err := t.TrackStatus.Valid(); err != nil {
-		return fmt.Errorf("Track: %s", err.Error())
-	}
-
-	return nil
+	*PartialCreateTrack
+	*PartialUpdateTrack
+	ID          primitive.ObjectID    `json:"id"                     bson:"_id"          validate:"required"`
+	SourceURL   string                `json:"source_url"             bson:"source_url"   validate:"required,url"`
+	Title       string                `json:"title"                  bson:"title"        validate:"required,min=3"`
+	Duration    *int64                `json:"duration,omitempty"     bson:"duration"     validate:"omitempty,min=1"`
+	DataKey     *string               `json:"data_key,omitempty"     bson:"data_key"     validate:"omitempty,min=1"`
+	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids"   validate:"omitempty,min=1"`
+	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status" validate:"omitempty,oneof=UNKNOWN PENDING INVALID"`
+	AccessedAt  int64                 `json:"accessed_at"            bson:"accessed_at"  validate:"required"`
+	CreatedAt   int64                 `json:"created_at"             bson:"created_at"   validate:"required"`
+	UpdatedAt   int64                 `json:"updated_at"             bson:"updated_at"   validate:"required,gtefield=CreatedAt"`
 }
 
 func ListTracks(ctx context.Context) ([]Track, error) {
@@ -112,20 +70,20 @@ func ListTracks(ctx context.Context) ([]Track, error) {
 	return tracks, nil
 }
 
-func CreateTrack(ctx context.Context, pct *PartialCreateTrack) (*Track, error) {
-	if err := pct.Valid(); err != nil {
+func CreateTrack(ctx context.Context, t *PartialCreateTrack) (*Track, error) {
+	if err := validator.Validate.Struct(t); err != nil {
 		return nil, err
 	}
 
 	track := Track{
 		ID:          primitive.NewObjectID(),
-		Title:       pct.Title,
-		SourceURL:   pct.SourceURL,
+		Title:       t.Title,
+		SourceURL:   t.SourceURL,
 		Duration:    nil,
 		DataKey:     nil,
 		ArtistIDs:   nil,
-		TrackStatus: TrackStatusUnknown,
-		AccessedAt:  time.Now().Unix(),
+		TrackStatus: jsii.String(TrackStatusUnknown),
+		AccessedAt:  0,
 		CreatedAt:   time.Now().Unix(),
 		UpdatedAt:   time.Now().Unix(),
 	}
@@ -161,13 +119,13 @@ func ReadTrack(ctx context.Context, id string) (*Track, error) {
 		return nil, err
 	}
 
-	trackLogger.Debugw("read track", "id", id)
+	trackLogger.Debugw("read track", "id", track.ID.Hex())
 
 	return &track, nil
 }
 
-func UpdateTrack(ctx context.Context, id string, t *Track) (*Track, error) {
-	if err := t.Valid(); err != nil {
+func UpdateTrack(ctx context.Context, id string, t *PartialUpdateTrack) (*Track, error) {
+	if err := validator.Validate.Struct(t); err != nil {
 		return nil, err
 	}
 
@@ -176,17 +134,24 @@ func UpdateTrack(ctx context.Context, id string, t *Track) (*Track, error) {
 		return nil, err
 	}
 
-	update := bson.D{{
-		Key: "$set",
-		Value: bson.D{
-			{Key: "source_url", Value: t.SourceURL},
-			{Key: "data_key", Value: t.DataKey},
-			{Key: "duration", Value: t.Duration},
-			{Key: "artist_ids", Value: t.ArtistIDs},
-			{Key: "track_status", Value: t.TrackStatus},
-			{Key: "updated_at", Value: time.Now().Unix()},
-		},
-	}}
+	updates := bson.D{{Key: "updated_at", Value: time.Now().Unix()}}
+	if t.Duration != nil {
+		updates = append(updates, bson.E{Key: "duration", Value: t.Duration})
+	}
+
+	if t.DataKey != nil {
+		updates = append(updates, bson.E{Key: "data_key", Value: t.DataKey})
+	}
+
+	if t.ArtistIDs != nil {
+		updates = append(updates, bson.E{Key: "artist_ids", Value: t.ArtistIDs})
+	}
+
+	if t.TrackStatus != nil {
+		updates = append(updates, bson.E{Key: "track_status", Value: t.TrackStatus})
+	}
+
+	update := bson.D{{Key: "$set", Value: updates}}
 
 	opts := options.FindOneAndUpdate().
 		SetReturnDocument(options.After).
@@ -197,17 +162,23 @@ func UpdateTrack(ctx context.Context, id string, t *Track) (*Track, error) {
 		return nil, err
 	}
 
-	trackLogger.Debugw("updated track", "id", id)
+	trackLogger.Debugw("updated track", "id", track.ID.Hex())
 
 	return &track, nil
 }
 
 func DeleteTrack(ctx context.Context, id string) error {
-	if _, err := trackCol().DeleteOne(ctx, bson.D{{Key: "_id", Value: id}}); err != nil {
+	oid, err := mongoutil.BsonID(id)
+	if err != nil {
 		return err
 	}
 
-	trackLogger.Debugw("deleted track", "id", id)
+	var track Track
+	if err := trackCol().FindOneAndDelete(ctx, oid).Decode(&track); err != nil {
+		return err
+	}
+
+	trackLogger.Debugw("deleted track", "id", track.ID.Hex())
 
 	return nil
 }

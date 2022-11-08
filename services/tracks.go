@@ -1,14 +1,13 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/axatol/anywhere/models"
 	"github.com/axatol/anywhere/server"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 func ListTracks(c *gin.Context) {
@@ -22,19 +21,13 @@ func ListTracks(c *gin.Context) {
 }
 
 func CreateTrack(c *gin.Context) {
-	raw, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
+	var input models.PartialCreateTrack
+	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	var partialTrack models.PartialCreateTrack
-	if err := json.Unmarshal(raw, &partialTrack); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
-		return
-	}
-
-	track, err := models.CreateTrack(c, &partialTrack)
+	track, err := models.CreateTrack(c, &input)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
@@ -61,20 +54,10 @@ func ReadTrack(c *gin.Context) {
 
 func UpdateTrack(c *gin.Context) {
 	id := c.Param("id")
-	if id == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide id")))
-		return
-	}
 
-	raw, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
+	var input models.PartialUpdateTrack
+	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
-		return
-	}
-
-	var input models.Track
-	if err := json.Unmarshal(raw, &input); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
 		return
 	}
 
