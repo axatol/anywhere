@@ -2,6 +2,7 @@ package config
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -33,6 +34,7 @@ func resolveRawConfig() []byte {
 			panic(err)
 		}
 
+		fmt.Printf("INFO: using config at: %s\n", loc)
 		return rawConfig
 	}
 

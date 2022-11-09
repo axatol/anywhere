@@ -8,10 +8,7 @@ class Chart extends k8s.Chart {
   }
 }
 
-const app = new k8s.App({
-  outdir: "./dist",
-  // yamlOutputType: k8s.YamlOutputType.FILE_PER_APP,
-});
+const app = new k8s.App();
 
 const chart = new Chart(app, "anywhere-server-chart", {
   namespace: "anywhere",
@@ -52,16 +49,6 @@ const server = deployment.addContainer({
 const service = new kplus.Service(chart, "server-svc", {
   selector: deployment.toPodSelector(),
   ports: server.ports.map((port) => ({ port: port.number })),
-});
-
-new kplus.Service(chart, "minio-svc", {
-  type: kplus.ServiceType.EXTERNAL_NAME,
-  externalName: "deployment-service.minio.svc.cluster.local",
-});
-
-new kplus.Service(chart, "mongo-svc", {
-  type: kplus.ServiceType.EXTERNAL_NAME,
-  externalName: "deployment-service.mongo.svc.cluster.local",
 });
 
 new kplus.Ingress(chart, "server-ing").addHostRule(
