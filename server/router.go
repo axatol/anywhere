@@ -40,6 +40,7 @@ func Init() {
 	R.Use(ginzap.Ginzap(logger.Desugar(), time.RFC3339, false))
 	R.Use(ginzap.RecoveryWithZap(logger.Desugar(), true))
 	R.Use(gzip.Gzip(gzip.DefaultCompression))
+	R.Use(middlewareJWT())
 }
 
 func Start(port string) {

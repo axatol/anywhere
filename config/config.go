@@ -26,6 +26,11 @@ type config struct {
 	Server struct {
 		Port         string   `yaml:"port"`
 		AllowOrigins []string `yaml:"allow_origins"`
+
+		Auth struct {
+			Issuer   string `yaml:"issuer"`
+			Audience string `yaml:"audience"`
+		} `yaml:"auth"`
 	} `yaml:"server"`
 }
 
@@ -41,7 +46,9 @@ func (c *config) ApplyDefaults() {
 	// c.Datastore.User
 	// c.Datastore.Pass
 	c.Server.Port = assertStr("server.port", &c.Server.Port, "8042")
-	c.Server.AllowOrigins = assertStrs("server.Port", c.Server.AllowOrigins, []string{"http://localhost:3000"})
+	c.Server.AllowOrigins = assertStrs("server.allow_origins", c.Server.AllowOrigins, []string{"http://localhost:3000"})
+	// c.Server.Auth.Issuer
+	// c.Server.Auth.Audience
 }
 
 func (c *config) ApplyFromEnvironment() {
@@ -57,6 +64,8 @@ func (c *config) ApplyFromEnvironment() {
 	c.Datastore.Pass = assertStr("DATASTORE_PASS", envStr("DATASTORE_PASS"), c.Datastore.Pass)
 	c.Server.Port = assertStr("SERVER_PORT", envStr("SERVER_PORT"), c.Server.Port)
 	c.Server.AllowOrigins = assertStrs("SERVER_ALLOW_ORIGINS", envStrs("SERVER_ALLOW_ORIGINS"), c.Server.AllowOrigins)
+	c.Server.Auth.Issuer = assertStr("SERVER_AUTH_ISSUER", envStr("SERVER_AUTH_ISSUER"), c.Server.Auth.Issuer)
+	c.Server.Auth.Audience = assertStr("SERVER_AUTH_AUDIENCE", envStr("SERVER_AUTH_AUDIENCE"), c.Server.Auth.Audience)
 }
 
 func (c *config) ApplyFromFlags() {
@@ -72,6 +81,8 @@ func (c *config) ApplyFromFlags() {
 	flagDatastorePass := flag.String("datastore-pass", "", "database pass")
 	flagServerPort := flag.String("server-port", c.Server.Port, "server listen port")
 	flagServerAllowedOrigins := flag.String("server-allowed-origins", strings.Join(c.Server.AllowOrigins, ","), "server allowed origins")
+	flagServerAuthIssuer := flag.String("server-auth-issuer", c.Server.Auth.Issuer, "server auth issuer")
+	flagServerAuthAudience := flag.String("server-auth-audience", c.Server.Auth.Audience, "server auth audience")
 	flag.Parse()
 
 	c.Verbose = *flagVerbose
@@ -86,6 +97,8 @@ func (c *config) ApplyFromFlags() {
 	c.Datastore.Pass = assertStr("datastore.pass", flagDatastorePass, c.Datastore.Pass)
 	c.Server.Port = *flagServerPort
 	c.Server.AllowOrigins = strings.Split(*flagServerAllowedOrigins, ",")
+	c.Server.Auth.Issuer = *flagServerAuthIssuer
+	c.Server.Auth.Audience = *flagServerAuthAudience
 }
 
 func init() {
