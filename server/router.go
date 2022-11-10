@@ -35,6 +35,7 @@ func Init() {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = false
+	corsConfig.AllowHeaders = []string{"authorization", "x-timestamp"}
 	corsConfig.AllowOrigins = config.Values.Server.AllowOrigins
 	R.Use(cors.New(corsConfig))
 	R.Use(ginzap.Ginzap(logger.Desugar(), time.RFC3339, false))
