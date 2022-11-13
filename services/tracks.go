@@ -17,6 +17,10 @@ func ListTracks(c *gin.Context) {
 		return
 	}
 
+	if result == nil {
+		result = []models.Track{}
+	}
+
 	c.JSON(http.StatusOK, server.OKResponse(result))
 }
 

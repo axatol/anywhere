@@ -18,6 +18,10 @@ func ListArtists(c *gin.Context) {
 		return
 	}
 
+	if result == nil {
+		result = []models.Artist{}
+	}
+
 	c.JSON(http.StatusOK, server.OKResponse(result))
 }
 

@@ -15,13 +15,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var trackLogger = config.Log.Named("track")
-
 func trackCol() *mongo.Collection {
 	return database.Database.Collection("tracks")
 }
 
 const (
+	TrackStatusReady   = "READY"
 	TrackStatusUnknown = "UNKNOWN"
 	TrackStatusPending = "PENDING"
 	TrackStatusInvalid = "INVALID"
@@ -33,10 +32,9 @@ type PartialCreateTrack struct {
 }
 
 type PartialUpdateTrack struct {
-	Duration    *int64                `json:"duration,omitempty"     bson:"duration"     validate:"omitempty,min=1"`
-	DataKey     *string               `json:"data_key,omitempty"     bson:"data_key"     validate:"omitempty,min=1"`
-	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids"   validate:"omitempty,min=1"`
-	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status" validate:"omitempty,oneof=UNKNOWN PENDING INVALID"`
+	Duration  *int64                `json:"duration,omitempty"     bson:"duration"     validate:"omitempty,min=1"`
+	DataKey   *string               `json:"data_key,omitempty"     bson:"data_key"     validate:"omitempty,min=1"`
+	ArtistIDs *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids"   validate:"omitempty,min=1"`
 }
 
 type Track struct {
@@ -46,7 +44,7 @@ type Track struct {
 	Duration    *int64                `json:"duration,omitempty"     bson:"duration"     validate:"omitempty,min=1"`
 	DataKey     *string               `json:"data_key,omitempty"     bson:"data_key"     validate:"omitempty,min=1"`
 	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids"   validate:"omitempty,min=1"`
-	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status" validate:"omitempty,oneof=UNKNOWN PENDING INVALID"`
+	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status" validate:"omitempty,oneof=UNKNOWN PENDING INVALID READY"`
 	AccessedAt  int64                 `json:"accessed_at"            bson:"accessed_at"  validate:"required"`
 	CreatedAt   int64                 `json:"created_at"             bson:"created_at"   validate:"required"`
 	UpdatedAt   int64                 `json:"updated_at"             bson:"updated_at"   validate:"required,gtefield=CreatedAt"`
@@ -63,7 +61,7 @@ func ListTracks(ctx context.Context) ([]Track, error) {
 		return nil, err
 	}
 
-	trackLogger.Debugw("listed tracks", "count", len(tracks))
+	config.Log.Debugw("listed tracks", "count", len(tracks))
 
 	return tracks, nil
 }
@@ -90,7 +88,7 @@ func CreateTrack(ctx context.Context, t *PartialCreateTrack) (*Track, error) {
 		return nil, err
 	}
 
-	trackLogger.Debugw("created track", "id", track.ID.Hex())
+	config.Log.Debugw("created track", "id", track.ID.Hex())
 
 	return &track, nil
 }
@@ -117,7 +115,7 @@ func ReadTrack(ctx context.Context, id string) (*Track, error) {
 		return nil, err
 	}
 
-	trackLogger.Debugw("read track", "id", track.ID.Hex())
+	config.Log.Debugw("read track", "id", track.ID.Hex())
 
 	return &track, nil
 }
@@ -145,10 +143,6 @@ func UpdateTrack(ctx context.Context, id string, t *PartialUpdateTrack) (*Track,
 		updates = append(updates, bson.E{Key: "artist_ids", Value: t.ArtistIDs})
 	}
 
-	if t.TrackStatus != nil {
-		updates = append(updates, bson.E{Key: "track_status", Value: t.TrackStatus})
-	}
-
 	update := bson.D{{Key: "$set", Value: updates}}
 
 	opts := options.FindOneAndUpdate().
@@ -160,7 +154,7 @@ func UpdateTrack(ctx context.Context, id string, t *PartialUpdateTrack) (*Track,
 		return nil, err
 	}
 
-	trackLogger.Debugw("updated track", "id", track.ID.Hex())
+	config.Log.Debugw("updated track", "id", track.ID.Hex())
 
 	return &track, nil
 }
@@ -176,7 +170,7 @@ func DeleteTrack(ctx context.Context, id string) error {
 		return err
 	}
 
-	trackLogger.Debugw("deleted track", "id", track.ID.Hex())
+	config.Log.Debugw("deleted track", "id", track.ID.Hex())
 
 	return nil
 }

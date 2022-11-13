@@ -11,7 +11,6 @@ import (
 )
 
 var Client *s3.Client
-var logger = config.Log.Named("datastore")
 
 func Init(ctx context.Context) {
 	endpointResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
@@ -40,4 +39,9 @@ func Init(ctx context.Context) {
 	if _, err := Client.ListBuckets(ctx, &s3.ListBucketsInput{}); err != nil {
 		panic(err)
 	}
+
+	config.Log.Infow("initialised datastore client",
+		"bucket", config.Values.Datastore.Bucket,
+		"prefix", config.Values.Datastore.PathPrefix,
+	)
 }

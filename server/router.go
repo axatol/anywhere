@@ -6,15 +6,13 @@ import (
 	"time"
 
 	"github.com/axatol/anywhere/config"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	logger = config.Log.Named("server")
-	R      *gin.Engine
+	R *gin.Engine
 )
 
 func Init() {
@@ -33,24 +31,23 @@ func Init() {
 	R.UnescapePathValues = true
 	R.RemoveExtraSlash = true
 
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = false
-	corsConfig.AllowHeaders = []string{"authorization", "x-timestamp"}
-	corsConfig.AllowOrigins = config.Values.Server.AllowOrigins
-	R.Use(cors.New(corsConfig))
-	R.Use(ginzap.Ginzap(logger.Desugar(), time.RFC3339, false))
-	R.Use(ginzap.RecoveryWithZap(logger.Desugar(), true))
+	R.Use(ginzap.Ginzap(config.Log.Desugar(), time.RFC3339, false))
+	R.Use(ginzap.RecoveryWithZap(config.Log.Desugar(), true))
 	R.Use(gzip.Gzip(gzip.DefaultCompression))
+
+	R.Use(middlewareCORS())
 	R.Use(middlewareJWT())
+
+	config.Log.Info("configured server")
 }
 
 func Start(port string) {
-	logger.Debugw("starting server",
+	config.Log.Infow("starting server",
 		"port", config.Values.Server.Port,
 	)
 
 	srv := http.Server{Addr: fmt.Sprintf(":%s", port), Handler: R}
 	if err := srv.ListenAndServe(); err != nil {
-		logger.Fatalln(err)
+		config.Log.Fatalln(err)
 	}
 }

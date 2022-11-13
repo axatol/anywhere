@@ -12,8 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var jwtLogger = config.Log.Named("jwtmiddleware")
-
 func middlewareJWT() gin.HandlerFunc {
 	if config.Values.Server.Auth.Issuer == "" ||
 		config.Values.Server.Auth.Audience == "" {
@@ -41,7 +39,7 @@ func middlewareJWT() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		errorHandler := func(w http.ResponseWriter, r *http.Request, err error) {
-			jwtLogger.Warnw("request denied", "path", c.Request.URL.Path, "error", err)
+			config.Log.Warnw("request denied", "path", c.Request.URL.Path, "error", err)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, ErrorResponse(err))
 		}
 

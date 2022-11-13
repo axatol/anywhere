@@ -14,8 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var artistLogger = config.Log.Named("artist")
-
 func artistCol() *mongo.Collection {
 	return database.Database.Collection("artists")
 }
@@ -42,7 +40,7 @@ func ListArtists(ctx context.Context) ([]Artist, error) {
 		return nil, err
 	}
 
-	artistLogger.Debugw("listed artists", "count", len(artists))
+	config.Log.Debugw("listed artists", "count", len(artists))
 
 	return artists, nil
 }
@@ -63,7 +61,7 @@ func CreateArtist(ctx context.Context, a *PartialArtist) (*Artist, error) {
 		return nil, err
 	}
 
-	artistLogger.Debugw("created artist", "id", artist.ID.Hex())
+	config.Log.Debugw("created artist", "id", artist.ID.Hex())
 
 	return &artist, nil
 }
@@ -79,7 +77,7 @@ func ReadArtist(ctx context.Context, id string) (*Artist, error) {
 		return nil, err
 	}
 
-	artistLogger.Debugw("read artist", "id", artist.ID.Hex())
+	config.Log.Debugw("read artist", "id", artist.ID.Hex())
 
 	return &artist, nil
 }
@@ -111,7 +109,7 @@ func UpdateArtist(ctx context.Context, id string, a *PartialArtist) (*Artist, er
 		return nil, err
 	}
 
-	artistLogger.Debugw("updated artist", "id", artist.ID.Hex())
+	config.Log.Debugw("updated artist", "id", artist.ID.Hex())
 
 	return &artist, nil
 }
@@ -127,7 +125,7 @@ func DeleteArtist(ctx context.Context, id string) error {
 		return err
 	}
 
-	artistLogger.Debugw("deleted artist", "id", artist.ID.Hex())
+	config.Log.Debugw("deleted artist", "id", artist.ID.Hex())
 
 	return nil
 }
