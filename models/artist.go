@@ -23,10 +23,11 @@ type PartialArtist struct {
 }
 
 type Artist struct {
-	ID        primitive.ObjectID `json:"id"         bson:"_id"        validate:"required"`
-	Name      string             `json:"name"       bson:"name"       validate:"required,min=1"`
-	CreatedAt int64              `json:"created_at" bson:"created_at" validate:"required"`
-	UpdatedAt int64              `json:"updated_at" bson:"updated_at" validate:"required,gtefield=CreatedAt"`
+	ID        primitive.ObjectID `json:"id"                 bson:"_id"                validate:"required"`
+	Name      string             `json:"name"               bson:"name"               validate:"required,min=1"`
+	Metadata  map[string]string  `json:"metadata,omitempty" bson:"metadata,omitempty" validate:"omitempty,min=1"`
+	CreatedAt int64              `json:"created_at"         bson:"created_at"         validate:"required"`
+	UpdatedAt int64              `json:"updated_at"         bson:"updated_at"         validate:"required,gtefield=CreatedAt"`
 }
 
 func ListArtists(ctx context.Context) ([]Artist, error) {

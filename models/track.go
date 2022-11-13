@@ -32,22 +32,22 @@ type PartialCreateTrack struct {
 }
 
 type PartialUpdateTrack struct {
-	Duration  *int64                `json:"duration,omitempty"     bson:"duration"     validate:"omitempty,min=1"`
-	DataKey   *string               `json:"data_key,omitempty"     bson:"data_key"     validate:"omitempty,min=1"`
-	ArtistIDs *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids"   validate:"omitempty,min=1"`
+	Duration  *int64                `json:"duration,omitempty"   bson:"duration,omitempty"   validate:"omitempty,min=1"`
+	DataKey   *string               `json:"data_key,omitempty"   bson:"data_key,omitempty"   validate:"omitempty,min=1"`
+	ArtistIDs *[]primitive.ObjectID `json:"artist_ids,omitempty" bson:"artist_ids,omitempty" validate:"omitempty,min=1"`
 }
 
 type Track struct {
-	ID          primitive.ObjectID    `json:"id"                     bson:"_id"          validate:"required"`
-	SourceURL   string                `json:"source_url"             bson:"source_url"   validate:"required,url"`
-	Title       string                `json:"title"                  bson:"title"        validate:"required,min=3"`
-	Duration    *int64                `json:"duration,omitempty"     bson:"duration"     validate:"omitempty,min=1"`
-	DataKey     *string               `json:"data_key,omitempty"     bson:"data_key"     validate:"omitempty,min=1"`
-	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids"   validate:"omitempty,min=1"`
-	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status" validate:"omitempty,oneof=UNKNOWN PENDING INVALID READY"`
-	AccessedAt  int64                 `json:"accessed_at"            bson:"accessed_at"  validate:"required"`
-	CreatedAt   int64                 `json:"created_at"             bson:"created_at"   validate:"required"`
-	UpdatedAt   int64                 `json:"updated_at"             bson:"updated_at"   validate:"required,gtefield=CreatedAt"`
+	ID          primitive.ObjectID    `json:"id"                     bson:"_id"                    validate:"required"`
+	SourceURL   string                `json:"source_url"             bson:"source_url"             validate:"required,url"`
+	Title       string                `json:"title"                  bson:"title"                  validate:"required,min=3"`
+	Duration    *int64                `json:"duration,omitempty"     bson:"duration,omitempty"     validate:"omitempty,min=1"`
+	DataKey     *string               `json:"data_key,omitempty"     bson:"data_key,omitempty"     validate:"omitempty,min=1"`
+	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids,omitempty"   validate:"omitempty,min=1"`
+	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status,omitempty" validate:"omitempty,oneof=UNKNOWN PENDING INVALID READY"`
+	AccessedAt  int64                 `json:"accessed_at"            bson:"accessed_at"            validate:"required"`
+	CreatedAt   int64                 `json:"created_at"             bson:"created_at"             validate:"required"`
+	UpdatedAt   int64                 `json:"updated_at"             bson:"updated_at"             validate:"required,gtefield=CreatedAt"`
 }
 
 func ListTracks(ctx context.Context) ([]Track, error) {

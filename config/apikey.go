@@ -67,7 +67,7 @@ func (a *APIKeys) Names() []string {
 	return names
 }
 
-func (a *APIKeys) KeyFor(name string) *string {
+func (a *APIKeys) For(name string) *string {
 	for _, key := range *a {
 		if key.Name == name {
 			return &key.Value
