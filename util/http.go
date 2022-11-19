@@ -8,7 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/axatol/anywhere/config"
 )
+
+type Headers map[string]string
 
 type QueryParameters map[string]string
 
@@ -16,7 +20,7 @@ func (q *QueryParameters) String() string {
 	result := make([]string, len(*q))
 	index := 0
 	for name, value := range *q {
-		result[index] = fmt.Sprintf(url.QueryEscape(name), url.QueryEscape(value))
+		result[index] = fmt.Sprintf("%s=%s", url.QueryEscape(name), url.QueryEscape(value))
 		index += 1
 	}
 
@@ -30,25 +34,32 @@ type RequestConfig struct {
 	Body       io.Reader
 }
 
-func Request[T any](url string, config RequestConfig) (*T, error) {
-	if config.Method == "" {
-		config.Method = http.MethodGet
+func Request[T any](url string, cfg RequestConfig) (*T, error) {
+	if cfg.Method == "" {
+		cfg.Method = http.MethodGet
 	}
 
-	if config.Body == nil {
-		config.Body = http.NoBody
+	if cfg.Body == nil {
+		cfg.Body = http.NoBody
 	}
 
-	parameters := QueryParameters(config.Parameters)
-
-	request, err := http.NewRequest(config.Method, url+parameters.String(), config.Body)
-	if config.Headers != nil {
-		for key, value := range config.Headers {
+	parameters := QueryParameters(cfg.Parameters)
+	endpoint := url + parameters.String()
+	request, err := http.NewRequest(cfg.Method, endpoint, cfg.Body)
+	if cfg.Headers != nil {
+		for key, value := range cfg.Headers {
 			request.Header.Add(key, value)
 		}
 	}
 
 	response, err := http.DefaultClient.Do(request)
+	config.Log.Debugw("response",
+		"request_method", request.Method,
+		"request_url", request.URL,
+		"response_status", response.StatusCode,
+		"response_content_length", response.ContentLength,
+	)
+
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/axatol/anywhere/datasource/musicbrainz"
 	"github.com/axatol/anywhere/models"
 	"github.com/axatol/anywhere/server"
 	"github.com/gin-gonic/gin"
@@ -87,4 +88,26 @@ func DeleteTrack(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusNoContent, server.EmptyResponse())
+}
+
+func SearchTrackMetadata(c *gin.Context) {
+	query := c.Query("query")
+	if len(query) < 1 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide query")))
+		return
+	}
+
+	client, err := musicbrainz.NewClient()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
+		return
+	}
+
+	tracks, err := client.LookupRecording(query)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, server.OKResponse(tracks))
 }

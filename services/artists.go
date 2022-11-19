@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/axatol/anywhere/config"
+	"github.com/axatol/anywhere/datasource/musicbrainz"
 	"github.com/axatol/anywhere/models"
 	"github.com/axatol/anywhere/server"
 	"github.com/gin-gonic/gin"
@@ -37,11 +37,6 @@ func CreateArtist(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
-
-	config.Log.Debugw("created artist",
-		"partial_artist", input,
-		"artist", artist,
-	)
 
 	c.JSON(http.StatusCreated, server.OKResponse(artist))
 }
@@ -93,4 +88,26 @@ func DeleteArtist(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusNoContent, server.EmptyResponse())
+}
+
+func SearchArtistMetadata(c *gin.Context) {
+	query := c.Query("query")
+	if len(query) < 1 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide query")))
+		return
+	}
+
+	client, err := musicbrainz.NewClient()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
+		return
+	}
+
+	artists, err := client.LookupArtist(query)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, server.OKResponse(artists))
 }
