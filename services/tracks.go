@@ -3,8 +3,10 @@ package services
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/axatol/anywhere/datasource/musicbrainz"
+	"github.com/axatol/anywhere/datasource/youtube"
 	"github.com/axatol/anywhere/models"
 	"github.com/axatol/anywhere/server"
 	"github.com/gin-gonic/gin"
@@ -103,11 +105,44 @@ func SearchTrackMetadata(c *gin.Context) {
 		return
 	}
 
-	tracks, err := client.LookupRecording(query)
+	results, err := client.LookupRecording(query)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, server.OKResponse(results))
+}
+
+func SearchTracks(c *gin.Context) {
+	query := c.Query("query")
+	if len(query) < 1 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide query")))
+		return
+	}
+
+	limit := []int{}
+	if rawLimit := c.Query("limit"); rawLimit != "" {
+		parsedLimit, err := strconv.ParseInt(rawLimit, 10, 0)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("invalid limit")))
+			return
+		}
+
+		limit = append(limit, int(parsedLimit))
+	}
+
+	client, err := youtube.GetClient()
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, server.OKResponse(tracks))
+	results, err := client.Query(query, limit...)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, server.OKResponse(results))
 }

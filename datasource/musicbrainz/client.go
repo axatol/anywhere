@@ -1,3 +1,4 @@
+// https://musicbrainz.org/doc/MusicBrainz_API
 package musicbrainz
 
 import (
@@ -6,7 +7,9 @@ import (
 	"github.com/axatol/anywhere/config"
 )
 
-const baseURL = "https://musicbrainz.org/ws/2"
+const (
+	baseURL = "https://musicbrainz.org/ws/2"
+)
 
 var client *Client
 

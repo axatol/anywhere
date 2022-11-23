@@ -69,6 +69,8 @@ func Request[T any](url string, cfg RequestConfig) (*T, error) {
 		return nil, err
 	}
 
+	// config.Log.Debugw("response body", "body", string(raw))
+
 	var result T
 	if err := json.Unmarshal(raw, &result); err != nil {
 		return nil, err

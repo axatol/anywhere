@@ -27,17 +27,18 @@ func main() {
 
 	server.R.GET("/api/artists", services.ListArtists)
 	server.R.POST("/api/artists", services.CreateArtist)
-	server.R.GET("/api/artists/metadata", services.SearchArtistMetadata)
 	server.R.GET("/api/artists/:id", services.ReadArtist)
 	server.R.PUT("/api/artists/:id", services.UpdateArtist)
 	server.R.DELETE("/api/artists/:id", services.DeleteArtist)
 
 	server.R.GET("/api/tracks", services.ListTracks)
 	server.R.POST("/api/tracks", services.CreateTrack)
-	server.R.GET("/api/tracks/metadata", services.SearchTrackMetadata)
 	server.R.GET("/api/tracks/:id", services.ReadTrack)
 	server.R.PUT("/api/tracks/:id", services.UpdateTrack)
 	server.R.DELETE("/api/tracks/:id", services.DeleteTrack)
+
+	server.R.GET("/api/tracks/search", services.SearchTracks)
+	server.R.GET("/api/tracks/metadata", services.SearchTrackMetadata)
 
 	server.Start(config.Values.Server.Port)
 }
