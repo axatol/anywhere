@@ -28,7 +28,7 @@ func ListTracks(c *gin.Context) {
 }
 
 func CreateTrack(c *gin.Context) {
-	var input models.PartialCreateTrack
+	var input models.Track
 	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
@@ -62,7 +62,7 @@ func ReadTrack(c *gin.Context) {
 func UpdateTrack(c *gin.Context) {
 	id := c.Param("id")
 
-	var input models.PartialUpdateTrack
+	var input models.Track
 	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
@@ -88,6 +88,9 @@ func DeleteTrack(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
+
+	// TODO cleanup artists with no tracks
+	// TODO cleanup albums with no tracks
 
 	c.JSON(http.StatusNoContent, server.EmptyResponse())
 }

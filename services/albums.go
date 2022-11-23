@@ -10,78 +10,78 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
-func ListArtists(c *gin.Context) {
-	result, err := models.ListArtists(c)
+func ListAlbums(c *gin.Context) {
+	result, err := models.ListAlbums(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
 	if result == nil {
-		result = []models.Artist{}
+		result = []models.Album{}
 	}
 
 	c.JSON(http.StatusOK, server.OKResponse(result))
 }
 
-func CreateArtist(c *gin.Context) {
-	var input models.Artist
+func CreateAlbum(c *gin.Context) {
+	var input models.Album
 	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	artist, err := models.CreateArtist(c, &input)
+	album, err := models.CreateAlbum(c, &input)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, server.OKResponse(artist))
+	c.JSON(http.StatusCreated, server.OKResponse(album))
 }
 
-func ReadArtist(c *gin.Context) {
+func ReadAlbum(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide id")))
 		return
 	}
 
-	artist, err := models.ReadArtist(c, id)
+	album, err := models.ReadAlbum(c, id)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, server.OKResponse(artist))
+	c.JSON(http.StatusOK, server.OKResponse(album))
 }
 
-func UpdateArtist(c *gin.Context) {
+func UpdateAlbum(c *gin.Context) {
 	id := c.Param("id")
 
-	var input models.Artist
+	var input models.Album
 	if err := c.ShouldBindWith(&input, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	artist, err := models.UpdateArtist(c, id, &input)
+	album, err := models.UpdateAlbum(c, id, &input)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, server.OKResponse(artist))
+	c.JSON(http.StatusOK, server.OKResponse(album))
 }
 
-func DeleteArtist(c *gin.Context) {
+func DeleteAlbum(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, server.ErrorResponse(fmt.Errorf("must provide id")))
 		return
 	}
 
-	if err := models.DeleteArtist(c, id); err != nil {
+	if err := models.DeleteAlbum(c, id); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, server.ErrorResponse(err))
 		return
 	}

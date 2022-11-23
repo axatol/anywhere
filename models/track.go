@@ -26,28 +26,19 @@ const (
 	TrackStatusInvalid = "INVALID"
 )
 
-type PartialCreateTrack struct {
-	SourceURL string `json:"source_url"   bson:"source_url" validate:"required,url"`
-	Title     string `json:"title"        bson:"title"      validate:"required,min=3"`
-}
-
-type PartialUpdateTrack struct {
-	Duration  *int64                `json:"duration,omitempty"   bson:"duration,omitempty"   validate:"omitempty,min=1"`
-	DataKey   *string               `json:"data_key,omitempty"   bson:"data_key,omitempty"   validate:"omitempty,min=1"`
-	ArtistIDs *[]primitive.ObjectID `json:"artist_ids,omitempty" bson:"artist_ids,omitempty" validate:"omitempty,min=1"`
-}
-
 type Track struct {
-	ID          primitive.ObjectID    `json:"id"                     bson:"_id"                    validate:"required"`
-	SourceURL   string                `json:"source_url"             bson:"source_url"             validate:"required,url"`
-	Title       string                `json:"title"                  bson:"title"                  validate:"required,min=3"`
-	Duration    *int64                `json:"duration,omitempty"     bson:"duration,omitempty"     validate:"omitempty,min=1"`
-	DataKey     *string               `json:"data_key,omitempty"     bson:"data_key,omitempty"     validate:"omitempty,min=1"`
-	ArtistIDs   *[]primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids,omitempty"   validate:"omitempty,min=1"`
-	TrackStatus *string               `json:"track_status,omitempty" bson:"track_status,omitempty" validate:"omitempty,oneof=UNKNOWN PENDING INVALID READY"`
-	AccessedAt  int64                 `json:"accessed_at"            bson:"accessed_at"            validate:"required"`
-	CreatedAt   int64                 `json:"created_at"             bson:"created_at"             validate:"required"`
-	UpdatedAt   int64                 `json:"updated_at"             bson:"updated_at"             validate:"required,gtefield=CreatedAt"`
+	ID          primitive.ObjectID   `json:"id"                     bson:"_id"                    validate:"required"`
+	MBID        *string              `json:"mbid"                   bson:"mbid"                   validate:"required,min=1"`
+	SourceURL   *string              `json:"source_url"             bson:"source_url"             validate:"required,url"`
+	Name        string               `json:"title"                  bson:"title"                  validate:"required,min=3"`
+	Duration    *int64               `json:"duration,omitempty"     bson:"duration,omitempty"     validate:"omitempty"`
+	DataKey     *string              `json:"data_key,omitempty"     bson:"data_key,omitempty"     validate:"omitempty"`
+	ArtistIDs   []primitive.ObjectID `json:"artist_ids,omitempty"   bson:"artist_ids,omitempty"   validate:"omitempty"`
+	Metadata    map[string]string    `json:"metadata,omitempty"     bson:"metadata,omitempty"     validate:"omitempty"`
+	TrackStatus *string              `json:"track_status,omitempty" bson:"track_status,omitempty" validate:"omitempty,oneof=UNKNOWN PENDING INVALID READY"`
+	AccessedAt  int64                `json:"accessed_at"            bson:"accessed_at"            validate:"required"`
+	CreatedAt   int64                `json:"created_at"             bson:"created_at"             validate:"required"`
+	UpdatedAt   int64                `json:"updated_at"             bson:"updated_at"             validate:"required,gtefield=CreatedAt"`
 }
 
 func ListTracks(ctx context.Context) ([]Track, error) {
@@ -66,20 +57,16 @@ func ListTracks(ctx context.Context) ([]Track, error) {
 	return tracks, nil
 }
 
-func CreateTrack(ctx context.Context, t *PartialCreateTrack) (*Track, error) {
+func CreateTrack(ctx context.Context, t *Track) (*Track, error) {
 	if err := validator.Validate.Struct(t); err != nil {
 		return nil, err
 	}
 
 	track := Track{
 		ID:          primitive.NewObjectID(),
-		Title:       t.Title,
+		Name:        t.Name,
 		SourceURL:   t.SourceURL,
-		Duration:    nil,
-		DataKey:     nil,
-		ArtistIDs:   nil,
 		TrackStatus: jsii.String(TrackStatusUnknown),
-		AccessedAt:  0,
 		CreatedAt:   time.Now().Unix(),
 		UpdatedAt:   time.Now().Unix(),
 	}
@@ -120,7 +107,7 @@ func ReadTrack(ctx context.Context, id string) (*Track, error) {
 	return &track, nil
 }
 
-func UpdateTrack(ctx context.Context, id string, t *PartialUpdateTrack) (*Track, error) {
+func UpdateTrack(ctx context.Context, id string, t *Track) (*Track, error) {
 	if err := validator.Validate.Struct(t); err != nil {
 		return nil, err
 	}
@@ -130,7 +117,23 @@ func UpdateTrack(ctx context.Context, id string, t *PartialUpdateTrack) (*Track,
 		return nil, err
 	}
 
-	updates := bson.D{{Key: "updated_at", Value: time.Now().Unix()}}
+	updates := bson.D{
+		{Key: "name", Value: t.Name},
+		{Key: "updated_at", Value: time.Now().Unix()},
+	}
+
+	if t.MBID != nil {
+		updates = append(updates, bson.E{Key: "mbid", Value: t.MBID})
+	}
+
+	if t.SourceURL != nil {
+		updates = append(updates, bson.E{Key: "source_url", Value: t.SourceURL})
+	}
+
+	if t.Name != "" {
+		updates = append(updates, bson.E{Key: "name", Value: t.Name})
+	}
+
 	if t.Duration != nil {
 		updates = append(updates, bson.E{Key: "duration", Value: t.Duration})
 	}
@@ -141,6 +144,14 @@ func UpdateTrack(ctx context.Context, id string, t *PartialUpdateTrack) (*Track,
 
 	if t.ArtistIDs != nil {
 		updates = append(updates, bson.E{Key: "artist_ids", Value: t.ArtistIDs})
+	}
+
+	if t.Metadata != nil {
+		updates = append(updates, bson.E{Key: "metadata", Value: t.Metadata})
+	}
+
+	if t.TrackStatus != nil {
+		updates = append(updates, bson.E{Key: "track_status", Value: t.TrackStatus})
 	}
 
 	update := bson.D{{Key: "$set", Value: updates}}

@@ -18,14 +18,11 @@ func artistCol() *mongo.Collection {
 	return database.Database.Collection("artists")
 }
 
-type PartialArtist struct {
-	Name string `json:"name"`
-}
-
 type Artist struct {
 	ID        primitive.ObjectID `json:"id"                 bson:"_id"                validate:"required"`
+	MBID      *string            `json:"mbid,omitempty"     bson:"mbid,omitempty"     validate:"omitempty"`
 	Name      string             `json:"name"               bson:"name"               validate:"required,min=1"`
-	Metadata  map[string]string  `json:"metadata,omitempty" bson:"metadata,omitempty" validate:"omitempty,min=1"`
+	Metadata  map[string]string  `json:"metadata,omitempty" bson:"metadata,omitempty" validate:"omitempty"`
 	CreatedAt int64              `json:"created_at"         bson:"created_at"         validate:"required"`
 	UpdatedAt int64              `json:"updated_at"         bson:"updated_at"         validate:"required,gtefield=CreatedAt"`
 }
@@ -46,7 +43,7 @@ func ListArtists(ctx context.Context) ([]Artist, error) {
 	return artists, nil
 }
 
-func CreateArtist(ctx context.Context, a *PartialArtist) (*Artist, error) {
+func CreateArtist(ctx context.Context, a *Artist) (*Artist, error) {
 	if err := validator.Validate.Struct(a); err != nil {
 		return nil, err
 	}
@@ -83,7 +80,7 @@ func ReadArtist(ctx context.Context, id string) (*Artist, error) {
 	return &artist, nil
 }
 
-func UpdateArtist(ctx context.Context, id string, a *PartialArtist) (*Artist, error) {
+func UpdateArtist(ctx context.Context, id string, a *Artist) (*Artist, error) {
 	if err := validator.Validate.Struct(a); err != nil {
 		return nil, err
 	}
@@ -93,13 +90,20 @@ func UpdateArtist(ctx context.Context, id string, a *PartialArtist) (*Artist, er
 		return nil, err
 	}
 
-	update := bson.D{{
-		Key: "$set",
-		Value: bson.D{
-			{Key: "name", Value: a.Name},
-			{Key: "updated_at", Value: time.Now().Unix()},
-		},
-	}}
+	updates := bson.D{
+		{Key: "name", Value: a.Name},
+		{Key: "updated_at", Value: time.Now().Unix()},
+	}
+
+	if a.MBID != nil {
+		updates = append(updates, bson.E{Key: "mbid", Value: a.MBID})
+	}
+
+	if a.Metadata != nil {
+		updates = append(updates, bson.E{Key: "metadata", Value: a.Metadata})
+	}
+
+	update := bson.D{{Key: "$set", Value: updates}}
 
 	opts := options.FindOneAndUpdate().
 		SetReturnDocument(options.After).

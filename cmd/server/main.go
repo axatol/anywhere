@@ -26,10 +26,11 @@ func main() {
 	server.R.GET("/api/health", services.Health)
 
 	server.R.GET("/api/artists", services.ListArtists)
-	server.R.POST("/api/artists", services.CreateArtist)
 	server.R.GET("/api/artists/:id", services.ReadArtist)
-	server.R.PUT("/api/artists/:id", services.UpdateArtist)
-	server.R.DELETE("/api/artists/:id", services.DeleteArtist)
+
+	server.R.GET("/api/albums", services.ListAlbums)
+	server.R.GET("/api/albums/:id", services.ReadAlbum)
+	server.R.PUT("/api/albums/:id", services.UpdateAlbum)
 
 	server.R.GET("/api/tracks", services.ListTracks)
 	server.R.POST("/api/tracks", services.CreateTrack)
